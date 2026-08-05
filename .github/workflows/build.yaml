@@ -68,7 +68,7 @@ jobs:
               | sudo tee /etc/containers/registries.d/tashikk.yaml >/dev/null
             sign_args=(--sign-passphrase-file=/dev/null "--sign-by-sigstore-private-key=${key_file}")
           else
-            echo "::warning::SIGNING_SECRET not set — pushing UNSIGNED. Tashikk bakes no signature policy yet (backlog/0001), so 'bootc switch' still works (trust-on-first-use)."
+            echo "::warning::SIGNING_SECRET not set — pushing UNSIGNED. Tashikk now bakes a sigstoreSigned policy.json, so 'bootc switch'/'bootc upgrade' to this image will be REJECTED until the secret is configured."
           fi
 
           podman push "${sign_args[@]}" "${REGISTRY}/${IMAGE_NAME}:latest"

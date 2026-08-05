@@ -22,8 +22,9 @@ Steen's greetd/dms-greeter, printer GUI, and Sway-removal items entirely.
 
 0. [0000-base-and-architecture.md](0000-base-and-architecture.md) — decision record: why
    `FROM silverblue`, additive, GNOME kept, niri+Noctalia as a GDM session.
-1. [0001-signing.md](0001-signing.md) — **deferred**: bake a Tashikk signing key + policy so
-   the update stream is verified. Needs a keypair + the `SIGNING_SECRET` CI secret.
+1. [0001-signing.md](0001-signing.md) — **done**: signed update stream (baked `cosign.pub` +
+   sigstoreSigned policy; CI signs with `SIGNING_SECRET`). Key shared with Steen, but
+   `matchRepository` keeps signatures per-repo.
 2. [0002-niri-noctalia-session.md](0002-niri-noctalia-session.md) — niri + Noctalia v5 +
    matugen + kitty + xwayland-satellite; the GDM "Niri" session entry.
 3. [0003-first-boot-checklist.md](0003-first-boot-checklist.md) — living hardware/boot

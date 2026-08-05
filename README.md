@@ -17,9 +17,9 @@ niri-only desktop).
 
 > ## 🚧 Work in progress
 >
-> Early scaffolding. The image builds; it is **not yet signed** (the first rebase is
-> trust-on-first-use — see [`backlog/0001`](backlog/0001-signing.md)) and hasn't been
-> hardware-verified. Personal project, no support.
+> Early scaffolding. The image builds and is **signed** (verified update stream — see
+> [`backlog/0001`](backlog/0001-signing.md)); it hasn't been hardware-verified yet. Personal
+> project, no support.
 
 ## Install
 

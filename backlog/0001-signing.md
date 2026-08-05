@@ -1,34 +1,34 @@
-# Signed update stream (deferred — needs a keypair)
+# Signed update stream
 
-- **Status:** deferred (blocked on a signing keypair + CI secret)
+- **Status:** done (2026-08-05) — signing key + policy in place
 - **Created:** 2026-08-05
 - **Area:** image (`Containerfile` policy + CI signing) — security
 - **Depends:** 0000
 - **Related:** Steen's `0001` (the proven signed-image bootstrap this ports from)
 
-## Why deferred
+## What shipped
 
-Steen bakes a `cosign.pub` + a `sigstoreSigned` `policy.json` entry that *requires* every
-update to `ghcr.io/reinier/steen` be signed, and CI signs the push with a private key from the
-`SIGNING_SECRET` secret. Tashikk needs the same, but it requires a **Tashikk-specific keypair**
-that doesn't exist yet, and only the repo owner can set the `SIGNING_SECRET` GitHub secret.
+Tashikk verifies its own update stream (`ghcr.io/reinier/tashikk`):
 
-Until that's done, Tashikk ships **unsigned**: the Containerfile bakes **no** requiring policy,
-CI pushes unsigned (with a warning), and the first `bootc switch` is **trust-on-first-use**.
-This is safe for a personal WIP but should be closed before daily-driving.
+- **Baked** `cosign.pub` + a `sigstoreSigned` `policy.json` entry (`patch-policy.py`) keyed on
+  the `ghcr.io/reinier` namespace with `signedIdentity: matchRepository`, plus
+  `files/tashikk-registries.yaml` enabling sigstore-attachment reads.
+- **CI signs** the `:latest` push with the private key from the `SIGNING_SECRET` repo secret.
 
-## Implementation (when the key exists)
+## Shared key with Steen (deliberate)
 
-1. Generate a passphrase-less cosign keypair (`cosign generate-key-pair`), commit `cosign.pub`
-   to the repo, set the private key as the `SIGNING_SECRET` repo secret. **Never commit the
-   private key.**
-2. Port Steen's policy machinery: `patch-policy.py` (adds the `sigstoreSigned` entry for
-   `ghcr.io/reinier/tashikk`) + `files/tashikk-registries.yaml` (enables sigstore attachment
-   reads), and the `COPY cosign.pub /usr/share/pki/containers/` + `RUN patch-policy.py` block.
-3. The CI already signs when `SIGNING_SECRET` is present (ported from Steen) — no CI change
-   needed beyond setting the secret.
+The `SIGNING_SECRET` is the **same private key as Steen**, so `cosign.pub` is identical. This
+is a shared trust root, but **not** cross-repo authorization: `matchRepository` binds each
+signature to the exact repo it was made for, so a Steen signature (identity
+`ghcr.io/reinier/steen`) cannot satisfy a Tashikk pull, and vice-versa. One key to manage, no
+weakening of per-image trust.
 
 ## Verification
 
-- After the key is set: a fresh push is signed; `bootc switch` to it verifies against the
-  baked policy; a deliberately unsigned/tampered push is **rejected**.
+- CI push log shows `--sign-by-sigstore-private-key` ran and `Storing signatures` succeeded.
+- On hardware: `bootc switch ghcr.io/reinier/tashikk:latest` verifies against the baked policy;
+  every subsequent `bootc upgrade` is signature-enforced. (First rebase from Silverblue is
+  still TOFU — the *source* system's policy doesn't require our key; enforcement takes over
+  once on Tashikk.)
+- Negative: an unsigned push would now be **rejected** by the baked policy (CI warns loudly if
+  `SIGNING_SECRET` is ever unset).

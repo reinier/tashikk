@@ -202,10 +202,24 @@ RUN systemctl mask bootc-fetch-apply-updates.timer rpm-ostreed-automatic.timer \
     done \
  && echo "update timers masked: bootc-fetch-apply-updates + rpm-ostreed-automatic"
 
-# NOTE: image-update signing (baked cosign.pub + a sigstoreSigned policy.json requiring it)
-# is deliberately NOT here yet — it needs a Tashikk signing keypair + the SIGNING_SECRET CI
-# secret. See backlog/0001. Until then the image is pushed UNSIGNED and the first rebase is
-# trust-on-first-use.
+# --- Image-update trust (backlog/0001) ---
+# Tashikk boots this image, so it must verify its own update stream
+# (ghcr.io/reinier/tashikk). The Silverblue base ships only Fedora's default container
+# policy, so establish the ghcr.io/reinier trust chain from scratch: bake the public key
+# and add a sigstoreSigned policy.json entry. The key is SHARED with Steen (same
+# SIGNING_SECRET), but signedIdentity=matchRepository binds each signature to its own repo,
+# so cross-repo authorization is impossible.
+COPY cosign.pub /usr/share/pki/containers/cosign.pub
+COPY patch-policy.py /tmp/patch-policy.py
+RUN python3 /tmp/patch-policy.py && rm -f /tmp/patch-policy.py
+
+# sigstoreSigned only takes effect if the reader is told to fetch sigstore *attachment*
+# signatures for this namespace — otherwise verification looks in the wrong place. Write to
+# both the factory template and /etc (whichever the system reads).
+COPY files/tashikk-registries.yaml /usr/share/factory/etc/containers/registries.d/tashikk.yaml
+RUN mkdir -p /etc/containers/registries.d \
+ && cp /usr/share/factory/etc/containers/registries.d/tashikk.yaml \
+       /etc/containers/registries.d/tashikk.yaml
 
 # Fail the build on real bootc issues (warnings are fine).
 RUN bootc container lint
