@@ -37,7 +37,12 @@ FROM quay.io/fedora-ostree-desktops/silverblue:44
 # provenance dance like Steen's DMS. niri has NO built-in Xwayland, so xwayland-satellite
 # drives the Xwayland server already present in the base. kitty is the terminal.
 # Noctalia is launched from niri's config (dotfiles: spawn-at-startup noctalia-qs), not here.
-RUN dnf5 -y install --setopt=install_weak_deps=False niri kitty xwayland-satellite \
+#
+# kanshi: auto-applies output profiles on dock/undock (via wlr-output-management, which niri
+# implements). It's the set-and-forget display layer for a laptop. Neither Noctalia nor niri
+# ships a display-arrangement GUI — display config is a niri/dotfiles concern; see
+# backlog/0004. Enabled per-user from the dotfiles, not here.
+RUN dnf5 -y install --setopt=install_weak_deps=False niri kitty xwayland-satellite kanshi \
  && dnf5 -y install noctalia matugen \
  && dnf5 clean all
 
@@ -46,7 +51,7 @@ RUN dnf5 -y install --setopt=install_weak_deps=False niri kitty xwayland-satelli
 # "Niri" entry actually appears at login; if a future niri drops it, fail loudly here so we
 # know to bake our own /usr/share/wayland-sessions/niri.desktop.
 RUN set -e; \
-    rpm -q niri noctalia matugen kitty xwayland-satellite >/dev/null; \
+    rpm -q niri noctalia matugen kitty xwayland-satellite kanshi >/dev/null; \
     command -v niri >/dev/null    || { echo "ERROR: niri binary missing" >&2; exit 1; }; \
     command -v noctalia >/dev/null || command -v noctalia-qs >/dev/null \
       || { echo "ERROR: noctalia launcher missing" >&2; exit 1; }; \

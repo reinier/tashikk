@@ -28,6 +28,8 @@ Steen's greetd/dms-greeter, printer GUI, and Sway-removal items entirely.
    matugen + kitty + xwayland-satellite; the GDM "Niri" session entry.
 3. [0003-first-boot-checklist.md](0003-first-boot-checklist.md) — living hardware/boot
    verification (the parts CI can't prove).
+4. [0004-display-management.md](0004-display-management.md) — displays under niri (Noctalia
+   has no panel): niri `output` blocks + kanshi (baked) + nwg-displays (Flatpak, optional).
 
 ## Ported wholesale from Steen (no separate item needed)
 

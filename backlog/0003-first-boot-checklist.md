@@ -22,6 +22,8 @@ sudo bootc switch ghcr.io/reinier/tashikk:latest && sudo systemctl reboot
 - [ ] **X11 apps run** under niri (`pgrep -af xwayland-satellite`; launch an X11 app).
 - [ ] **Screencast** works under niri (Chromium → share screen; uses `xdg-desktop-portal-gnome`).
 - [ ] kitty opens; Nerd Font glyphs render (`fc-list | grep -i jetbrainsmono`).
+- [ ] **Displays** configured via niri `output` blocks (dotfiles); `niri msg outputs` lists
+      them; kanshi re-applies on dock/undock (0004). GNOME session's display panel unaffected.
 
 ## B. Apps ported from Steen (already proven on Steen; re-verify on this base)
 
