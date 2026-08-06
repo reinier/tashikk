@@ -40,7 +40,9 @@ beats packaging convenience here, so wdisplays is deliberately **not** baked.
 ## Implementation
 
 - **Image:** `kanshi` added to the niri session install (done).
-- **Dotfiles:** the `output {}` blocks, and enable `kanshi.service` (user) with a profile set.
+- **Dotfiles (done):** kanshi is **spawned from niri** (`local/startup.kdl`, not the systemd
+  user unit — so it inherits the session's `WAYLAND_DISPLAY` and only runs under niri) with a
+  starter `~/.config/kanshi/config`; `output {}` blocks go in `local/settings.kdl`.
 - **User choice:** install `nwg-displays` via Flatpak / the `apps` distrobox if a GUI is wanted.
 
 ## Verification
