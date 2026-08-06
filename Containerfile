@@ -22,6 +22,16 @@ RUN dnf5 -y install git make gcc kernel-headers \
  && make -C /src PREFIX=/usr \
  && make -C /src PREFIX=/usr DESTDIR=/out FORCE_SYSTEMD=1 install
 
+# --- wlr-which-key: leader-menu for the niri session, built from source (pinned) ---
+# A layer-shell "which-key" popup spawned from a niri keybind (the dank-lader replacement
+# lost in the DMS -> Noctalia move). Not in Fedora/Terra, so build the crate in a throwaway
+# stage (same keyd pattern) and ship only the binary. Runtime libs (cairo/pango/
+# libxkbcommon) are already in the Silverblue base. Config + keybind live in the dotfiles.
+FROM registry.fedoraproject.org/fedora:44 AS wlrwhichkey-build
+ARG WLR_WHICH_KEY_VERSION=1.3.0
+RUN dnf5 -y install cargo gcc pkgconf cairo-devel pango-devel libxkbcommon-devel wayland-devel \
+ && cargo install --locked --version "$WLR_WHICH_KEY_VERSION" --root /out wlr-which-key
+
 # Silverblue base — the full GNOME atomic desktop. GNOME stays; GDM stays (it gains a
 # "Niri" session entry once niri is installed below).
 FROM quay.io/fedora-ostree-desktops/silverblue:44
@@ -150,6 +160,10 @@ COPY files/synology-drive-opt.conf /usr/lib/tmpfiles.d/synology-drive-opt.conf
 # `systemctl enable keyd` live in the dotfiles.
 COPY --from=keyd-build /out/ /
 
+# --- wlr-which-key (leader menu) ---
+# Just the binary from the throwaway Rust builder; config + niri keybind live in dotfiles.
+COPY --from=wlrwhichkey-build /out/bin/wlr-which-key /usr/bin/wlr-which-key
+
 # --- Tailscale ---
 # From Fedora. Enabled at boot so the daemon socket exists and `tailscale set --operator`
 # works from the dotfiles; only `tailscale up` is left interactive.
@@ -191,6 +205,7 @@ RUN set -e; \
     [ "$(stat -c %g /usr/bin/op)" = 1501 ] || { echo "ERROR: op setgid not onepassword-cli(1501)" >&2; exit 1; }; \
     test -f /usr/lib/sysctl.d/60-1password-ptrace.conf || { echo "ERROR: ptrace_scope drop-in missing" >&2; exit 1; }; \
     command -v keyd >/dev/null || { echo "ERROR: keyd binary missing" >&2; exit 1; }; \
+    command -v wlr-which-key >/dev/null || { echo "ERROR: wlr-which-key binary missing" >&2; exit 1; }; \
     test -f /usr/lib/systemd/system/keyd.service || { echo "ERROR: keyd.service missing — FORCE_SYSTEMD did not take" >&2; exit 1; }; \
     test -s /etc/flatpak/remotes.d/flathub.flatpakrepo || { echo "ERROR: Flathub remote missing" >&2; exit 1; }; \
     systemctl is-enabled tailscaled.service >/dev/null || { echo "ERROR: tailscaled is not enabled" >&2; exit 1; }; \
