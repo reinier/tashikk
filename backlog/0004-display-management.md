@@ -25,25 +25,28 @@ so it can't configure the niri session. So the niri/Noctalia session needs its o
 2. **kanshi — baked into the image.** Auto-applies output profiles on dock/undock (via
    `wlr-output-management`, which niri implements). Enabled as a **user service from the
    dotfiles**, not in the image. This is the set-and-forget laptop layer.
-3. **GUI (optional, NOT in the image): nwg-displays.** The community-standard niri display GUI
-   — it's niri-aware and **persists** the arrangement (arrange → save), which is the whole
-   point. It's **not in Fedora**, so it goes in the `apps` distrobox or as a Flatpak, exactly
-   the ad-hoc-tooling path that exists for this.
+3. **GUI: `wdisplays` (baked).** A drag-to-arrange GUI that works under niri via
+   `wlr-output-management`. It's **live-only** (doesn't write niri's config), so it's the
+   "see the layout / read off the numbers" tool — you then persist those into the `output {}`
+   blocks and/or the kanshi config above. In Fedora's repos, so it's a clean one-package bake.
 
-## Why not wdisplays (even though it's in Fedora)
+## Why not nwg-displays (the niri-aware GUI that persists)
 
-`wdisplays` drives outputs live through `wlr-output-management` but **doesn't write niri's
-config** — niri doesn't persist runtime output changes, so a wdisplays arrangement is lost on
-restart. It's a "nudge now" tool, not a "set up my monitors" tool. Persistence (nwg-displays)
-beats packaging convenience here, so wdisplays is deliberately **not** baked.
+nwg-displays would be nicer (it writes the compositor's output config), but it is **not
+packaged for Fedora atomic anywhere** — not Flathub, Fedora, Terra, PyPI, or the
+`solopasha/hyprland` COPR (checked 2026-08). Upstream ships it only as a git/meson Python
+build or via the AUR, and its niri support is not clearly released. Baking a Python app from
+git for uncertain niri support isn't worth it when `wdisplays` + `output {}` + kanshi already
+cover the need. Revisit if it lands in a Fedora-reachable repo.
 
 ## Implementation
 
-- **Image:** `kanshi` added to the niri session install (done).
+- **Image:** `kanshi` + `wdisplays` added to the niri session install (done).
 - **Dotfiles (done):** kanshi is **spawned from niri** (`local/startup.kdl`, not the systemd
   user unit — so it inherits the session's `WAYLAND_DISPLAY` and only runs under niri) with a
   starter `~/.config/kanshi/config`; `output {}` blocks go in `local/settings.kdl`.
-- **User choice:** install `nwg-displays` via Flatpak / the `apps` distrobox if a GUI is wanted.
+- **GUI:** `wdisplays` (baked) for a visual arrange; copy the numbers into the output blocks /
+  kanshi config to persist.
 
 ## Verification
 

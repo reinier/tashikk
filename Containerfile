@@ -59,8 +59,13 @@ FROM quay.io/fedora-ostree-desktops/silverblue:44
 # these directly (Noctalia's IPC covers panels, not media/brightness). wpctl comes from
 # wireplumber (already in the base). GNOME's own daemons handle these in the GNOME session,
 # but not under niri, so name them explicitly.
+# wdisplays: a drag-to-arrange display GUI for the niri session (via wlr-output-management,
+# which niri implements). GNOME Settings only configures the GNOME session, and nwg-displays
+# isn't packaged for Fedora atomic (not Flathub/Fedora/Terra/PyPI/COPR), so wdisplays is the
+# clean packaged option. Live-only — persist the numbers into niri `output {}` blocks / the
+# kanshi config (both in the dotfiles). See backlog/0004.
 RUN dnf5 -y install --setopt=install_weak_deps=False \
-      niri kitty xwayland-satellite kanshi brightnessctl playerctl \
+      niri kitty xwayland-satellite kanshi brightnessctl playerctl wdisplays \
  && dnf5 -y install noctalia matugen \
  && dnf5 clean all
 
@@ -69,7 +74,7 @@ RUN dnf5 -y install --setopt=install_weak_deps=False \
 # "Niri" entry actually appears at login; if a future niri drops it, fail loudly here so we
 # know to bake our own /usr/share/wayland-sessions/niri.desktop.
 RUN set -e; \
-    rpm -q niri noctalia matugen kitty xwayland-satellite kanshi brightnessctl playerctl >/dev/null; \
+    rpm -q niri noctalia matugen kitty xwayland-satellite kanshi brightnessctl playerctl wdisplays >/dev/null; \
     command -v niri >/dev/null    || { echo "ERROR: niri binary missing" >&2; exit 1; }; \
     command -v noctalia >/dev/null || command -v noctalia-qs >/dev/null \
       || { echo "ERROR: noctalia launcher missing" >&2; exit 1; }; \
