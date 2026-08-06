@@ -29,7 +29,10 @@ RUN dnf5 -y install git make gcc kernel-headers \
 # libxkbcommon) are already in the Silverblue base. Config + keybind live in the dotfiles.
 FROM registry.fedoraproject.org/fedora:44 AS wlrwhichkey-build
 ARG WLR_WHICH_KEY_VERSION=1.3.0
-RUN dnf5 -y install cargo gcc pkgconf cairo-devel pango-devel libxkbcommon-devel wayland-devel \
+# cairo-sys-rs needs the cairo-gobject pkg-config module (separate -devel subpackage from
+# cairo-devel); the glib/gobject bindings want glib2-devel. First build caught the former.
+RUN dnf5 -y install cargo gcc pkgconf \
+      cairo-devel cairo-gobject-devel glib2-devel pango-devel libxkbcommon-devel wayland-devel \
  && cargo install --locked --version "$WLR_WHICH_KEY_VERSION" --root /out wlr-which-key
 
 # Silverblue base — the full GNOME atomic desktop. GNOME stays; GDM stays (it gains a
