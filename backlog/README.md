@@ -18,6 +18,10 @@ session, layer the personal app stack. There is **no subtraction layer** (Steen'
 source of complexity), and most plumbing is inherited from Silverblue, so the port drops
 Steen's greetd/dms-greeter, printer GUI, and Sway-removal items entirely.
 
+As of 0005–0007, Tashikk is growing a **third** session the same additive way: **Umbriel**
+(Noctalia's own compositor) alongside GNOME and Niri — not a replacement for either. GDM ends
+up offering all three; Noctalia is shared across both niri and Umbriel.
+
 ## Items
 
 0. [0000-base-and-architecture.md](0000-base-and-architecture.md) — decision record: why
@@ -31,6 +35,16 @@ Steen's greetd/dms-greeter, printer GUI, and Sway-removal items entirely.
    verification (the parts CI can't prove).
 4. [0004-display-management.md](0004-display-management.md) — displays under niri (Noctalia
    has no panel): niri `output` blocks + kanshi (baked) + nwg-displays (Flatpak, optional).
+5. [0005-umbriel-packaging-spike.md](0005-umbriel-packaging-spike.md) — **resolved.**
+   `umbriel-nightly` + `xdg-desktop-portal-umbriel-nightly` confirmed live on Terra
+   (`fc44`, both arches) via real `dnf5 repoquery`; no stable release yet, nightly only.
+6. [0006-umbriel-session.md](0006-umbriel-session.md) — **implemented**, unverified on
+   hardware. Adds Umbriel as a third GDM session using 0005's confirmed package names
+   (unpinned, tracks Terra's `-nightly` HEAD until a beta/1.0 lands); Noctalia shared with the
+   existing niri session, launched from Umbriel's own config.
+7. [0007-umbriel-display-management.md](0007-umbriel-display-management.md) — depends on
+   0006. Whether Umbriel's own `[outputs]` config (or the existing kanshi/wdisplays bake)
+   already covers displays, or something new is needed.
 
 ## Ported wholesale from Steen (no separate item needed)
 

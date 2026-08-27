@@ -49,6 +49,19 @@ sudo bootc switch ghcr.io/reinier/tashikk:latest && sudo systemctl reboot
 - [ ] **Signing:** currently UNSIGNED (0001) — first rebase is trust-on-first-use. Revisit
       once 0001 lands.
 
+## E. Umbriel session (0005, 0006, 0007 — once that work lands)
+
+- [ ] GDM login screen offers **GNOME**, **Niri**, *and* **Umbriel**.
+- [ ] **Niri** session still logs in and works exactly as before — Umbriel's arrival changed
+      nothing there (re-run the relevant checks from section A).
+- [ ] **Umbriel** session logs in → Umbriel + **Noctalia** come up (bar, launcher,
+      notifications — the same Noctalia already proven under niri).
+- [ ] Noctalia is launched by dotfiles-tashikk's Umbriel startup config, not by the image.
+- [ ] **X11 apps run** under Umbriel (`pgrep -af xwayland-satellite`; launch an X11 app).
+- [ ] **Screencast** works under Umbriel — note which portal actually serves it
+      (`xdg-desktop-portal-umbriel` vs `-gnome`).
+- [ ] Displays come up per whatever 0007 decided.
+
 ## Findings log
 
 | Date | Check | Result | Follow-up |

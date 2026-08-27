@@ -85,6 +85,56 @@ RUN set -e; \
       || { echo "ERROR: GNOME/plumbing was disturbed by the niri layer (should be additive)" >&2; exit 1; }; \
     echo "session OK: niri $(rpm -q --qf '%{VERSION}' niri) + noctalia $(rpm -q --qf '%{VERSION}' noctalia); GNOME/GDM intact"
 
+# --- Umbriel session (added alongside GNOME + Niri, not replacing either) ---
+# Umbriel is Noctalia's own compositor (wlroots 0.20 + SceneFX) — a second, independent
+# alternative session next to Niri (backlog/0006). Only Terra ships it (backlog/0005): no
+# stable release yet, only `-nightly` git-snapshot builds tracking upstream HEAD. That means
+# every rebuild can pick up a newer Umbriel commit — accepted deliberately for now, revisit
+# pinning a version once a beta/1.0 lands. Terra is enabled transiently for this one install,
+# same as the CLI toolkit's starship/yazi dance below — no third-party repo ships in the
+# final image.
+#
+# `umbriel-nightly` Requires xdg-desktop-portal-umbriel-nightly and xwayland-satellite (the
+# latter already present from the Niri session above), so nothing else needs naming
+# explicitly. weak-deps-off for the same reason as niri: don't let it pull in extras Noctalia
+# already provides.
+#
+# Noctalia is launched from Umbriel's own config (dotfiles: ~/.config/umbriel/config.toml),
+# not here — same split as the Niri session's spawn-at-startup.
+COPY files/terra.repo /etc/yum.repos.d/terra.repo
+RUN dnf5 -y install --setopt=install_weak_deps=False umbriel-nightly \
+ && rm -f /etc/yum.repos.d/terra.repo \
+ && dnf5 clean all
+
+# Guard: Umbriel landed AND niri + GNOME/GDM/plumbing are still untouched — a three-way
+# additive check, since Umbriel's arrival must not disturb either of the other two sessions.
+# niri is re-checked here (not just at the guard above) because a regression introduced by
+# this later layer would otherwise slip through undetected.
+RUN set -e; \
+    rpm -q umbriel-nightly xdg-desktop-portal-umbriel-nightly xwayland-satellite >/dev/null; \
+    command -v umbriel >/dev/null \
+      || { echo "ERROR: umbriel binary missing" >&2; exit 1; }; \
+    command -v start-umbriel >/dev/null \
+      || { echo "ERROR: start-umbriel launcher missing" >&2; exit 1; }; \
+    test -f /usr/share/wayland-sessions/umbriel.desktop \
+      || { echo "ERROR: umbriel GDM session file missing — GDM won't offer an Umbriel session" >&2; exit 1; }; \
+    test -f /usr/lib/systemd/user/umbriel.service \
+      || { echo "ERROR: umbriel.service missing — session may not start cleanly via systemd --user" >&2; exit 1; }; \
+    test -f /usr/share/xdg-desktop-portal/portals/umbriel.portal \
+      || { echo "ERROR: umbriel portal backend not registered with xdg-desktop-portal" >&2; exit 1; }; \
+    test -f /usr/share/xdg-desktop-portal/umbriel-portals.conf \
+      || { echo "ERROR: umbriel-portals.conf missing — portal scoping to the Umbriel session is unclear" >&2; exit 1; }; \
+    test -f /etc/yum.repos.d/terra.repo \
+      && { echo "ERROR: terra.repo left enabled in the image" >&2; exit 1; }; \
+    command -v niri >/dev/null \
+      || { echo "ERROR: niri missing — the Umbriel layer disturbed the existing Niri session" >&2; exit 1; }; \
+    test -f /usr/share/wayland-sessions/niri.desktop \
+      || { echo "ERROR: niri GDM session file gone — the Umbriel layer disturbed the Niri session" >&2; exit 1; }; \
+    rpm -q gnome-shell gdm xdg-desktop-portal-gnome gnome-keyring \
+           pipewire wireplumber NetworkManager >/dev/null \
+      || { echo "ERROR: GNOME/plumbing was disturbed by the Umbriel layer (should be additive)" >&2; exit 1; }; \
+    echo "session OK: niri + umbriel $(rpm -q --qf '%{VERSION}' umbriel-nightly) (both share noctalia $(rpm -q --qf '%{VERSION}' noctalia)); GNOME/GDM intact"
+
 # --- JetBrainsMono Nerd Font ---
 # Silverblue ships no Nerd Font (icon glyphs kitty/Noctalia use). Bake the patched font from
 # the upstream release — pinned, no Homebrew, no extra repo.
